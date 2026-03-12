@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { SignedIn, UserButton } from '@clerk/react'
 import './App.css'
 
 const reviewHistory = [
@@ -53,6 +54,7 @@ function App() {
   }
 
   return (
+    <SignedIn>
     <div className="dashboard">
       <header className="header">
         <div className="logo">
@@ -67,6 +69,7 @@ function App() {
           ))}
         </nav>
         <div className="header-right">
+          <UserButton afterSignOutUrl="/" />
           <span className="status-dot online"></span>
           <span className="time">{time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
@@ -252,6 +255,7 @@ function App() {
         <span>MiniMax M2.5</span>
       </footer>
     </div>
+    </SignedIn>
   )
 }
 
