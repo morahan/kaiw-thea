@@ -29,10 +29,16 @@ function App() {
   const [selectedReview, setSelectedReview] = useState(null)
   const [voiceText, setVoiceText] = useState('')
   const [voiceGenerating, setVoiceGenerating] = useState(false)
+  const [showHint, setShowHint] = useState(true)
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowHint(false), 5000)
+    return () => clearTimeout(t)
   }, [])
 
   const keyStats = {
@@ -54,10 +60,11 @@ function App() {
           <span className="logo-text">Thea</span>
         </div>
         <nav className="top-nav">
-          <button className={`nav-btn ${activeView === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveView('dashboard')}>Dashboard</button>
-          <button className={`nav-btn ${activeView === 'reviews' ? 'active' : ''}`} onClick={() => setActiveView('reviews')}>Reviews</button>
-          <button className={`nav-btn ${activeView === 'voice' ? 'active' : ''}`} onClick={() => setActiveView('voice')}>Voice</button>
-          <button className={`nav-btn ${activeView === 'history' ? 'active' : ''}`} onClick={() => setActiveView('history')}>History</button>
+          {['dashboard', 'reviews', 'voice', 'history'].map(view => (
+            <button key={view} className={`nav-btn ${activeView === view ? 'active' : ''}`} onClick={() => setActiveView(view)}>
+              {view.charAt(0).toUpperCase() + view.slice(1)}
+            </button>
+          ))}
         </nav>
         <div className="header-right">
           <span className="status-dot online"></span>
@@ -69,22 +76,17 @@ function App() {
         {activeView === 'dashboard' && (
           <>
             <section className="key-metrics">
-              <div className="metric" onClick={() => setActiveView('reviews')}>
-                <div className="metric-number warning">{keyStats.pendingReviews}</div>
-                <div className="metric-label">Pending</div>
-              </div>
-              <div className="metric">
-                <div className="metric-number success">{keyStats.shippedToday}</div>
-                <div className="metric-label">Shipped</div>
-              </div>
-              <div className="metric">
-                <div className="metric-number">{keyStats.avgScore}</div>
-                <div className="metric-label">Avg Score</div>
-              </div>
-              <div className="metric">
-                <div className="metric-number">{keyStats.approvalRate}%</div>
-                <div className="metric-label">Approval</div>
-              </div>
+              {[
+                { key: 'pendingReviews', label: 'Pending', color: 'warning', click: () => setActiveView('reviews') },
+                { key: 'shippedToday', label: 'Shipped', color: 'success' },
+                { key: 'avgScore', label: 'Avg Score', color: '' },
+                { key: 'approvalRate', label: 'Approval', color: '', suffix: '%' },
+              ].map(stat => (
+                <div key={stat.key} className="metric" onClick={stat.click} style={stat.click ? { cursor: 'pointer' } : {}}>
+                  <div className={`metric-number ${stat.color}`}>{stat.suffix ? `${keyStats[stat.key]}${stat.suffix}` : keyStats[stat.key]}</div>
+                  <div className="metric-label">{stat.label}</div>
+                </div>
+              ))}
             </section>
 
             <div className="two-col">
@@ -96,10 +98,7 @@ function App() {
                 <div className="card-list">
                   {pendingReviews.slice(0, 3).map(item => (
                     <div key={item.id} className="card pending" onClick={() => { setSelectedReview(item); setActiveView('reviews'); }}>
-                      <div className="card-content">
-                        <h3>{item.title}</h3>
-                        <span className="meta">{item.author} · {item.type}</span>
-                      </div>
+                      <div className="card-content"><h3>{item.title}</h3><span className="meta">{item.author} · {item.type}</span></div>
                       <span className="arrow">→</span>
                     </div>
                   ))}
@@ -107,9 +106,7 @@ function App() {
               </section>
 
               <section className="section">
-                <div className="section-header">
-                  <h2>📜 Activity</h2>
-                </div>
+                <div className="section-header"><h2>📜 Activity</h2></div>
                 <div className="activity-list">
                   {activityLog.map((item, i) => (
                     <div key={i} className="activity-item">
@@ -125,9 +122,7 @@ function App() {
             </div>
 
             <section className="section">
-              <div className="section-header">
-                <h2>⚡ Quick Actions</h2>
-              </div>
+              <div className="section-header"><h2>⚡ Quick Actions</h2></div>
               <div className="quick-actions">
                 <button className="action-btn" onClick={() => setActiveView('reviews')}>📝 Review Next</button>
                 <button className="action-btn" onClick={() => setActiveView('voice')}>🎙️ Test Voice</button>
@@ -139,10 +134,14 @@ function App() {
             <section className="section">
               <div className="section-header"><h2>💎 Brand Standards</h2></div>
               <div className="brand-grid">
-                <div className="brand-item"><span className="brand-icon">⚗️</span><div><h4>Scientific</h4><p>3-5 sources per article</p></div></div>
-                <div className="brand-item"><span className="brand-icon">🏛️</span><div><h4>Elegant</h4><p>750-1,250 words</p></div></div>
-                <div className="brand-item"><span className="brand-icon">🔥</span><div><h4>Warm</h4><p>No hype, just facts</p></div></div>
-                <div className="brand-item"><span className="brand-icon">✨</span><div><h4>Confident</h4><p>Clear CTAs</p></div></div>
+                {[
+                  { icon: '⚗️', title: 'Scientific', desc: '3-5 sources per article' },
+                  { icon: '🏛️', title: 'Elegant', desc: '750-1,250 words' },
+                  { icon: '🔥', title: 'Warm', desc: 'No hype, just facts' },
+                  { icon: '✨', title: 'Confident', desc: 'Clear CTAs' },
+                ].map((item, i) => (
+                  <div key={i} className="brand-item"><span className="brand-icon">{item.icon}</span><div><h4>{item.title}</h4><p>{item.desc}</p></div></div>
+                ))}
               </div>
             </section>
           </>
@@ -165,10 +164,9 @@ function App() {
                 
                 <div className="checklist">
                   <h4>Quick Check</h4>
-                  <label className="check-item"><input type="checkbox" /> Headline ≤10 words</label>
-                  <label className="check-item"><input type="checkbox" /> 3-5 sources</label>
-                  <label className="check-item"><input type="checkbox" /> Clear CTA</label>
-                  <label className="check-item"><input type="checkbox" /> No fake experience</label>
+                  {['Headline ≤10 words', '3-5 sources', 'Clear CTA', 'No fake experience'].map((item, i) => (
+                    <label key={i} className="check-item"><input type="checkbox" /> {item}</label>
+                  ))}
                 </div>
 
                 <div className="review-actions">
@@ -203,10 +201,9 @@ function App() {
               <div className="voice-params">
                 <h4>Parameters (Locked)</h4>
                 <div className="params-grid">
-                  <div className="param"><span>temp</span><span>0.2</span></div>
-                  <div className="param"><span>top_p</span><span>0.7</span></div>
-                  <div className="param"><span>rep_pen</span><span>1.0</span></div>
-                  <div className="param"><span>seed</span><span>42</span></div>
+                  {[{ k: 'temp', v: '0.2' }, { k: 'top_p', v: '0.7' }, { k: 'rep_pen', v: '1.0' }, { k: 'seed', v: '42' }].map(p => (
+                    <div key={p.k} className="param"><span>{p.k}</span><span>{p.v}</span></div>
+                  ))}
                 </div>
               </div>
 
@@ -224,9 +221,12 @@ function App() {
             <div className="section-header"><h2>📜 Review History</h2></div>
             
             <div className="history-stats">
-              <div className="hist-stat"><span className="hist-num">{reviewHistory.filter(r => r.verdict === 'ship').length}</span><span>Shipped</span></div>
-              <div className="hist-stat"><span className="hist-num">{reviewHistory.filter(r => r.verdict === 'revise').length}</span><span>Revised</span></div>
-              <div className="hist-stat"><span className="hist-num">{reviewHistory.filter(r => r.verdict === 'kill').length}</span><span>Killed</span></div>
+              {['ship', 'revise', 'kill'].map(v => (
+                <div key={v} className="hist-stat">
+                  <span className="hist-num">{reviewHistory.filter(r => r.verdict === v).length}</span>
+                  <span>{v.charAt(0).toUpperCase() + v.slice(1)}</span>
+                </div>
+              ))}
             </div>
 
             <div className="history-list">
@@ -242,6 +242,10 @@ function App() {
           </section>
         )}
       </main>
+
+      {showHint && (
+        <div className="hint">Click metrics to drill down · Hover for details</div>
+      )}
 
       <footer className="footer">
         <span>Built by Thea 🏛️</span>
