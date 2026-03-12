@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
-// Mock data - in production this would come from Notion API
 const reviewHistory = [
   { id: 'REV-001', title: 'Dead Hangs', author: 'Renzo', verdict: 'revise', score: 8.5, date: '2026-02-17', type: 'article' },
   { id: 'REV-002', title: 'Loaded Carries', author: 'Renzo', verdict: 'revise', score: 7.5, date: '2026-02-17', type: 'article' },
@@ -15,6 +14,13 @@ const pendingReviews = [
   { id: 1, title: 'Mobility Flow', author: 'Renzo', submitted: '10m ago', type: 'article', preview: 'Unlock your hips with these proven mobility drills. Based on the latest research from the Journal of Sports Science...', wordCount: 1100 },
   { id: 2, title: 'Squat Form Guide', author: 'Renzo', submitted: '2h ago', type: 'article', preview: 'The king of exercises deserves respect. Here is proper form for maximum gains and injury prevention...', wordCount: 1450 },
   { id: 3, title: 'Morning Routine', author: 'Kaia', submitted: '4h ago', type: 'social', preview: '5 moves to start your day right. No equipment needed.', wordCount: 180 },
+]
+
+const activityLog = [
+  { time: '10m ago', action: 'Review submitted', item: 'Mobility Flow', user: 'Renzo' },
+  { time: '2h ago', action: 'Revision received', item: 'Dead Hangs', user: 'Renzo' },
+  { time: '3h ago', action: 'Shipped', item: 'Loaded Carries', user: 'Thea' },
+  { time: '1d ago', action: 'Killed', item: 'HIIT Mistakes', user: 'Thea' },
 ]
 
 function App() {
@@ -92,7 +98,7 @@ function App() {
                     <div key={item.id} className="card pending" onClick={() => { setSelectedReview(item); setActiveView('reviews'); }}>
                       <div className="card-content">
                         <h3>{item.title}</h3>
-                        <span className="meta">{item.author} · {item.type} · {item.submitted}</span>
+                        <span className="meta">{item.author} · {item.type}</span>
                       </div>
                       <span className="arrow">→</span>
                     </div>
@@ -102,16 +108,16 @@ function App() {
 
               <section className="section">
                 <div className="section-header">
-                  <h2>📊 Recent Verdicts</h2>
+                  <h2>📜 Activity</h2>
                 </div>
-                <div className="card-list">
-                  {reviewHistory.slice(0, 3).map(item => (
-                    <div key={item.id} className={`card ${item.verdict === 'ship' ? 'shipped' : item.verdict === 'kill' ? 'killed' : 'revised'}`}>
-                      <div className="card-content">
-                        <h3>{item.title}</h3>
-                        <span className="meta">{item.author} · {item.date}</span>
+                <div className="activity-list">
+                  {activityLog.map((item, i) => (
+                    <div key={i} className="activity-item">
+                      <span className="activity-time">{item.time}</span>
+                      <div className="activity-content">
+                        <span className="activity-action">{item.action}</span>
+                        <span className="activity-item-name">{item.item}</span>
                       </div>
-                      <div className="verdict-badge" data-verdict={item.verdict}>{item.verdict}</div>
                     </div>
                   ))}
                 </div>
@@ -120,37 +126,23 @@ function App() {
 
             <section className="section">
               <div className="section-header">
-                <h2>💎 Brand Standards</h2>
+                <h2>⚡ Quick Actions</h2>
               </div>
+              <div className="quick-actions">
+                <button className="action-btn" onClick={() => setActiveView('reviews')}>📝 Review Next</button>
+                <button className="action-btn" onClick={() => setActiveView('voice')}>🎙️ Test Voice</button>
+                <button className="action-btn" onClick={() => setActiveView('history')}>📊 View History</button>
+                <button className="action-btn secondary">🔄 Sync Notion</button>
+              </div>
+            </section>
+
+            <section className="section">
+              <div className="section-header"><h2>💎 Brand Standards</h2></div>
               <div className="brand-grid">
-                <div className="brand-item">
-                  <span className="brand-icon">⚗️</span>
-                  <div>
-                    <h4>Scientific</h4>
-                    <p>3-5 sources per article</p>
-                  </div>
-                </div>
-                <div className="brand-item">
-                  <span className="brand-icon">🏛️</span>
-                  <div>
-                    <h4>Elegant</h4>
-                    <p>750-1,250 words</p>
-                  </div>
-                </div>
-                <div className="brand-item">
-                  <span className="brand-icon">🔥</span>
-                  <div>
-                    <h4>Warm</h4>
-                    <p>No hype, just facts</p>
-                  </div>
-                </div>
-                <div className="brand-item">
-                  <span className="brand-icon">✨</span>
-                  <div>
-                    <h4>Confident</h4>
-                    <p>Clear CTAs</p>
-                  </div>
-                </div>
+                <div className="brand-item"><span className="brand-icon">⚗️</span><div><h4>Scientific</h4><p>3-5 sources per article</p></div></div>
+                <div className="brand-item"><span className="brand-icon">🏛️</span><div><h4>Elegant</h4><p>750-1,250 words</p></div></div>
+                <div className="brand-item"><span className="brand-icon">🔥</span><div><h4>Warm</h4><p>No hype, just facts</p></div></div>
+                <div className="brand-item"><span className="brand-icon">✨</span><div><h4>Confident</h4><p>Clear CTAs</p></div></div>
               </div>
             </section>
           </>
@@ -189,10 +181,7 @@ function App() {
               <div className="review-list">
                 {pendingReviews.map(item => (
                   <div key={item.id} className="review-item" onClick={() => setSelectedReview(item)}>
-                    <div className="review-info">
-                      <h4>{item.title}</h4>
-                      <span>{item.author} · {item.wordCount} words</span>
-                    </div>
+                    <div className="review-info"><h4>{item.title}</h4><span>{item.author} · {item.wordCount} words</span></div>
                     <span className="review-time">{item.submitted}</span>
                   </div>
                 ))}
@@ -208,10 +197,7 @@ function App() {
             <div className="voice-card">
               <div className="voice-status">
                 <span className="status-indicator online"></span>
-                <div>
-                  <h3>Fish Speech</h3>
-                  <p>thea-cori-v3 · 1.2x speed</p>
-                </div>
+                <div><h3>Fish Speech</h3><p>thea-cori-v3 · 1.2x speed</p></div>
               </div>
               
               <div className="voice-params">
@@ -227,9 +213,7 @@ function App() {
               <div className="voice-test">
                 <h4>Test Voice</h4>
                 <textarea placeholder="Quality is the only message worth sending." value={voiceText} onChange={(e) => setVoiceText(e.target.value)} />
-                <button className="btn btn-voice" disabled={voiceGenerating || !voiceText.trim()}>
-                  {voiceGenerating ? 'Generating...' : '🎙️ Generate'}
-                </button>
+                <button className="btn btn-voice" disabled={voiceGenerating || !voiceText.trim()}>{voiceGenerating ? 'Generating...' : '🎙️ Generate'}</button>
               </div>
             </div>
           </section>
@@ -249,10 +233,7 @@ function App() {
               {reviewHistory.map(item => (
                 <div key={item.id} className="history-item">
                   <div className={`verdict-dot ${item.verdict}`}></div>
-                  <div className="history-info">
-                    <h4>{item.title}</h4>
-                    <span>{item.author} · {item.date}</span>
-                  </div>
+                  <div className="history-info"><h4>{item.title}</h4><span>{item.author} · {item.date}</span></div>
                   <span className="history-score">{item.score}</span>
                   <span className={`verdict-tag ${item.verdict}`}>{item.verdict}</span>
                 </div>
