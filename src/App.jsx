@@ -1,128 +1,273 @@
-import { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import './App.css';
+import { useState, useEffect } from 'react'
+import './App.css'
 
-const agent = { name: 'Thea', emoji: '🏛️', role: 'Brand Strategist', color: '#8b5cf6' };
+// Mock data - in production this would come from Notion API
+const reviewHistory = [
+  { id: 'REV-001', title: 'Dead Hangs', author: 'Renzo', verdict: 'revise', score: 8.5, date: '2026-02-17', type: 'article' },
+  { id: 'REV-002', title: 'Loaded Carries', author: 'Renzo', verdict: 'revise', score: 7.5, date: '2026-02-17', type: 'article' },
+  { id: 'REV-003', title: 'Muscle Growth 101', author: 'Kaia', verdict: 'ship', score: 9.2, date: '2026-02-16', type: 'article' },
+  { id: 'REV-004', title: 'HIIT Mistakes', author: 'Renzo', verdict: 'kill', score: 4.2, date: '2026-02-16', type: 'article' },
+  { id: 'REV-005', title: 'Morning Warmup', author: 'Kaia', verdict: 'ship', score: 8.8, date: '2026-02-15', type: 'article' },
+  { id: 'REV-006', title: 'Squat Deep', author: 'Renzo', verdict: 'revise', score: 7.9, date: '2026-02-15', type: 'article' },
+]
 
-const sentimentData = [
-  { name: 'Positive', value: 72, color: '#22c55e' },
-  { name: 'Neutral', value: 18, color: '#6b7280' },
-  { name: 'Negative', value: 10, color: '#ef4444' },
-];
-
-const channelData = [
-  { channel: 'Twitter', reach: 45000, engagement: 4.2 },
-  { channel: 'Instagram', reach: 28000, engagement: 5.8 },
-  { channel: 'LinkedIn', reach: 12000, engagement: 3.1 },
-  { channel: 'YouTube', reach: 8500, engagement: 6.2 },
-];
-
-const campaigns = [
-  { id: 1, name: 'AI Workout Launch', status: 'active', reach: 125000, engagement: 4.8 },
-  { id: 2, name: 'Fitness Trends Q1', status: 'active', reach: 89000, engagement: 5.2 },
-  { id: 3, name: 'User Testimonials', status: 'planning', reach: 0, engagement: 0 },
-  { id: 4, name: 'Partner Integration', status: 'active', reach: 45000, engagement: 3.9 },
-];
+const pendingReviews = [
+  { id: 1, title: 'Mobility Flow', author: 'Renzo', submitted: '10m ago', type: 'article', preview: 'Unlock your hips with these proven mobility drills. Based on the latest research from the Journal of Sports Science...', wordCount: 1100 },
+  { id: 2, title: 'Squat Form Guide', author: 'Renzo', submitted: '2h ago', type: 'article', preview: 'The king of exercises deserves respect. Here is proper form for maximum gains and injury prevention...', wordCount: 1450 },
+  { id: 3, title: 'Morning Routine', author: 'Kaia', submitted: '4h ago', type: 'social', preview: '5 moves to start your day right. No equipment needed.', wordCount: 180 },
+]
 
 function App() {
-  const [brand] = useState({ mentions: 1240, sentiment: 72, share: 12.5 });
+  const [time, setTime] = useState(new Date())
+  const [activeView, setActiveView] = useState('dashboard')
+  const [selectedReview, setSelectedReview] = useState(null)
+  const [voiceText, setVoiceText] = useState('')
+  const [voiceGenerating, setVoiceGenerating] = useState(false)
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const keyStats = {
+    pendingReviews: pendingReviews.length,
+    shippedToday: reviewHistory.filter(r => r.verdict === 'ship').length,
+    avgScore: (reviewHistory.reduce((a, b) => a + b.score, 0) / reviewHistory.length).toFixed(1),
+    approvalRate: Math.round((reviewHistory.filter(r => r.verdict === 'ship').length / reviewHistory.length) * 100),
+  }
+
+  const handleVerdict = (verdict) => {
+    alert(`${verdict.toUpperCase()} - This would trigger the review kickback workflow.`)
+  }
 
   return (
     <div className="dashboard">
-      <header style={{ '--color': agent.color }}>
-        <span className="emoji">{agent.emoji}</span>
-        <div>
-          <h1>{agent.name}</h1>
-          <p>{agent.role}</p>
+      <header className="header">
+        <div className="logo">
+          <span className="logo-icon">Θ</span>
+          <span className="logo-text">Thea</span>
+        </div>
+        <nav className="top-nav">
+          <button className={`nav-btn ${activeView === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveView('dashboard')}>Dashboard</button>
+          <button className={`nav-btn ${activeView === 'reviews' ? 'active' : ''}`} onClick={() => setActiveView('reviews')}>Reviews</button>
+          <button className={`nav-btn ${activeView === 'voice' ? 'active' : ''}`} onClick={() => setActiveView('voice')}>Voice</button>
+          <button className={`nav-btn ${activeView === 'history' ? 'active' : ''}`} onClick={() => setActiveView('history')}>History</button>
+        </nav>
+        <div className="header-right">
+          <span className="status-dot online"></span>
+          <span className="time">{time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
       </header>
 
-      <div className="stats-grid">
-        <div className="stat">
-          <span>Brand Mentions</span>
-          <strong>{brand.mentions.toLocaleString()}</strong>
-          <span className="trend positive">↑ 23%</span>
-        </div>
-        <div className="stat">
-          <span>Sentiment Score</span>
-          <strong>{brand.sentiment}%</strong>
-          <span className="trend positive">↑ 5%</span>
-        </div>
-        <div className="stat">
-          <span>Share of Voice</span>
-          <strong>{brand.share}%</strong>
-          <span className="trend positive">↑ 1.2%</span>
-        </div>
-        <div className="stat">
-          <span>Active Campaigns</span>
-          <strong>3</strong>
-        </div>
-      </div>
-
-      <div className="charts-row">
-        <div className="chart-card">
-          <h3>Brand Sentiment</h3>
-          <ResponsiveContainer width="100%" height={180}>
-            <PieChart>
-              <Pie
-                data={sentimentData}
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={70}
-                dataKey="value"
-              >
-                {sentimentData.map((entry, index) => (
-                  <Cell key={entry.name} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={{ backgroundColor: '#111', border: 'none' }} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="legend">
-            {sentimentData.map(s => (
-              <div key={s.name} className="legend-item">
-                <span style={{ backgroundColor: s.color }}></span>
-                {s.name}: {s.value}%
+      <main className="main">
+        {activeView === 'dashboard' && (
+          <>
+            <section className="key-metrics">
+              <div className="metric" onClick={() => setActiveView('reviews')}>
+                <div className="metric-number warning">{keyStats.pendingReviews}</div>
+                <div className="metric-label">Pending</div>
               </div>
-            ))}
-          </div>
-        </div>
-        <div className="chart-card">
-          <h3>Channel Performance</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={channelData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#222" />
-              <XAxis dataKey="channel" stroke="#666" />
-              <YAxis stroke="#666" />
-              <Tooltip contentStyle={{ backgroundColor: '#111', border: 'none' }} />
-              <Bar dataKey="reach" fill={agent.color} radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div className="section">
-        <h2>📢 Campaign Overview</h2>
-        <div className="campaign-list">
-          {campaigns.map(campaign => (
-            <div key={campaign.id} className={`campaign-item ${campaign.status}`}>
-              <div className="campaign-info">
-                <span className="campaign-name">{campaign.name}</span>
-                <span className={`status-badge ${campaign.status}`}>{campaign.status}</span>
+              <div className="metric">
+                <div className="metric-number success">{keyStats.shippedToday}</div>
+                <div className="metric-label">Shipped</div>
               </div>
-              {campaign.status === 'active' && (
-                <div className="campaign-stats">
-                  <span>Reach: {campaign.reach.toLocaleString()}</span>
-                  <span>Eng: {campaign.engagement}%</span>
+              <div className="metric">
+                <div className="metric-number">{keyStats.avgScore}</div>
+                <div className="metric-label">Avg Score</div>
+              </div>
+              <div className="metric">
+                <div className="metric-number">{keyStats.approvalRate}%</div>
+                <div className="metric-label">Approval</div>
+              </div>
+            </section>
+
+            <div className="two-col">
+              <section className="section">
+                <div className="section-header">
+                  <h2>⏳ Pending Reviews</h2>
+                  <span className="badge warning">{pendingReviews.length}</span>
                 </div>
-              )}
+                <div className="card-list">
+                  {pendingReviews.slice(0, 3).map(item => (
+                    <div key={item.id} className="card pending" onClick={() => { setSelectedReview(item); setActiveView('reviews'); }}>
+                      <div className="card-content">
+                        <h3>{item.title}</h3>
+                        <span className="meta">{item.author} · {item.type} · {item.submitted}</span>
+                      </div>
+                      <span className="arrow">→</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="section">
+                <div className="section-header">
+                  <h2>📊 Recent Verdicts</h2>
+                </div>
+                <div className="card-list">
+                  {reviewHistory.slice(0, 3).map(item => (
+                    <div key={item.id} className={`card ${item.verdict === 'ship' ? 'shipped' : item.verdict === 'kill' ? 'killed' : 'revised'}`}>
+                      <div className="card-content">
+                        <h3>{item.title}</h3>
+                        <span className="meta">{item.author} · {item.date}</span>
+                      </div>
+                      <div className="verdict-badge" data-verdict={item.verdict}>{item.verdict}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             </div>
-          ))}
-        </div>
-      </div>
+
+            <section className="section">
+              <div className="section-header">
+                <h2>💎 Brand Standards</h2>
+              </div>
+              <div className="brand-grid">
+                <div className="brand-item">
+                  <span className="brand-icon">⚗️</span>
+                  <div>
+                    <h4>Scientific</h4>
+                    <p>3-5 sources per article</p>
+                  </div>
+                </div>
+                <div className="brand-item">
+                  <span className="brand-icon">🏛️</span>
+                  <div>
+                    <h4>Elegant</h4>
+                    <p>750-1,250 words</p>
+                  </div>
+                </div>
+                <div className="brand-item">
+                  <span className="brand-icon">🔥</span>
+                  <div>
+                    <h4>Warm</h4>
+                    <p>No hype, just facts</p>
+                  </div>
+                </div>
+                <div className="brand-item">
+                  <span className="brand-icon">✨</span>
+                  <div>
+                    <h4>Confident</h4>
+                    <p>Clear CTAs</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
+
+        {activeView === 'reviews' && (
+          <section className="reviews-view">
+            <div className="section-header">
+              {selectedReview && <button className="back-btn" onClick={() => setSelectedReview(null)}>← Back</button>}
+              <h2>{selectedReview ? 'Review Detail' : 'Pending Queue'}</h2>
+            </div>
+            
+            {selectedReview ? (
+              <div className="review-detail">
+                <div className="review-header">
+                  <h3>{selectedReview.title}</h3>
+                  <span className="review-meta">{selectedReview.author} · {selectedReview.type} · {selectedReview.wordCount} words</span>
+                </div>
+                <p className="preview">{selectedReview.preview}</p>
+                
+                <div className="checklist">
+                  <h4>Quick Check</h4>
+                  <label className="check-item"><input type="checkbox" /> Headline ≤10 words</label>
+                  <label className="check-item"><input type="checkbox" /> 3-5 sources</label>
+                  <label className="check-item"><input type="checkbox" /> Clear CTA</label>
+                  <label className="check-item"><input type="checkbox" /> No fake experience</label>
+                </div>
+
+                <div className="review-actions">
+                  <button className="btn btn-ship" onClick={() => handleVerdict('ship')}>✅ Ship</button>
+                  <button className="btn btn-revise" onClick={() => handleVerdict('revise')}>🔄 Revise</button>
+                  <button className="btn btn-kill" onClick={() => handleVerdict('kill')}>❌ Kill</button>
+                </div>
+              </div>
+            ) : (
+              <div className="review-list">
+                {pendingReviews.map(item => (
+                  <div key={item.id} className="review-item" onClick={() => setSelectedReview(item)}>
+                    <div className="review-info">
+                      <h4>{item.title}</h4>
+                      <span>{item.author} · {item.wordCount} words</span>
+                    </div>
+                    <span className="review-time">{item.submitted}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {activeView === 'voice' && (
+          <section className="voice-view">
+            <div className="section-header"><h2>🎙️ Voice Engine</h2></div>
+            
+            <div className="voice-card">
+              <div className="voice-status">
+                <span className="status-indicator online"></span>
+                <div>
+                  <h3>Fish Speech</h3>
+                  <p>thea-cori-v3 · 1.2x speed</p>
+                </div>
+              </div>
+              
+              <div className="voice-params">
+                <h4>Parameters (Locked)</h4>
+                <div className="params-grid">
+                  <div className="param"><span>temp</span><span>0.2</span></div>
+                  <div className="param"><span>top_p</span><span>0.7</span></div>
+                  <div className="param"><span>rep_pen</span><span>1.0</span></div>
+                  <div className="param"><span>seed</span><span>42</span></div>
+                </div>
+              </div>
+
+              <div className="voice-test">
+                <h4>Test Voice</h4>
+                <textarea placeholder="Quality is the only message worth sending." value={voiceText} onChange={(e) => setVoiceText(e.target.value)} />
+                <button className="btn btn-voice" disabled={voiceGenerating || !voiceText.trim()}>
+                  {voiceGenerating ? 'Generating...' : '🎙️ Generate'}
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeView === 'history' && (
+          <section className="history-view">
+            <div className="section-header"><h2>📜 Review History</h2></div>
+            
+            <div className="history-stats">
+              <div className="hist-stat"><span className="hist-num">{reviewHistory.filter(r => r.verdict === 'ship').length}</span><span>Shipped</span></div>
+              <div className="hist-stat"><span className="hist-num">{reviewHistory.filter(r => r.verdict === 'revise').length}</span><span>Revised</span></div>
+              <div className="hist-stat"><span className="hist-num">{reviewHistory.filter(r => r.verdict === 'kill').length}</span><span>Killed</span></div>
+            </div>
+
+            <div className="history-list">
+              {reviewHistory.map(item => (
+                <div key={item.id} className="history-item">
+                  <div className={`verdict-dot ${item.verdict}`}></div>
+                  <div className="history-info">
+                    <h4>{item.title}</h4>
+                    <span>{item.author} · {item.date}</span>
+                  </div>
+                  <span className="history-score">{item.score}</span>
+                  <span className={`verdict-tag ${item.verdict}`}>{item.verdict}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
+
+      <footer className="footer">
+        <span>Built by Thea 🏛️</span>
+        <span>MiniMax M2.5</span>
+      </footer>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
